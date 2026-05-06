@@ -1,56 +1,41 @@
 package backend
 
-import "fmt"
-
-// Provider defines the interface for secret backends.
-type Provider interface {
-	// GetSecret retrieves a secret value by key.
-	GetSecret(key string) (string, error)
-	// Name returns the backend provider name.
-	Name() string
-}
-
-// Type represents a supported backend type.
-type Type string
-
-const (
-	TypeEnv    Type = "env"
-	TypeFile   Type = "file"
-	TypeVault  Type = "vault"
-	TypeAWSSSM Type = "aws-ssm"
+import (
+	"fmt"
 )
 
-// ErrSecretNotFound is returned when a secret key does not exist in the backend.
+// Backend is the interface all secret backends must satisfy.
+type Backend interface {
+	Get(key string) (string, error)
+	List() (map[string]string, error)
+	String() string
+}
+
+// ErrSecretNotFound is returned when a requested secret key does not exist.
 type ErrSecretNotFound struct {
-	Backend string
-	Key     string
+	Path string
 }
 
-func (e *ErrSecretNotFound) Error() string {
-	return fmt.Sprintf("secret %q not found in backend %q", e.Key, e.Backend)
+func (e ErrSecretNotFound) Error() string {
+	return fmt.Sprintf("secret not found: %s", e.Path)
 }
 
-// ErrUnsupportedBackend is returned when an unknown backend type is specified.
-type ErrUnsupportedBackend struct {
-	Type string
+// BackendConfig holds the type and options for a single backend.
+type BackendConfig struct {
+	Type    string            `yaml:"type"`
+	Options map[string]string `yaml:"options"`
 }
 
-func (e *ErrUnsupportedBackend) Error() string {
-	return fmt.Sprintf("unsupported backend type: %q", e.Type)
-}
-
-// New constructs a Provider for the given backend type and options.
-func New(backendType Type, opts map[string]string) (Provider, error) {
-	switch backendType {
-	case TypeEnv:
-		return NewEnvProvider(), nil
-	case TypeFile:
-		path, ok := opts["path"]
-		if !ok || path == "" {
-			return nil, fmt.Errorf("file backend requires 'path' option")
-		}
-		return NewFileProvider(path), nil
+// New constructs a Backend from a BackendConfig.
+func New(cfg BackendConfig) (Backend, error) {
+	switch cfg.Type {
+	case "env":
+		return NewEnvBackend(cfg.Options), nil
+	case "file":
+		return NewFileBackend(cfg.Options)
+	case "vault":
+		return NewVaultBackend(cfg.Options)
 	default:
-		return nil, &ErrUnsupportedBackend{Type: string(backendType)}
+		return nil, fmt.Errorf("unsupported backend type: %q", cfg.Type)
 	}
 }

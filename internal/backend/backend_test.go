@@ -1,64 +1,63 @@
-package backend_test
+package backend
 
 import (
-	"errors"
 	"testing"
-
-	"github.com/envchain-cli/envchain-cli/internal/backend"
 )
 
 func TestNew_EnvBackend(t *testing.T) {
-	p, err := backend.New(backend.TypeEnv, nil)
+	b, err := New(BackendConfig{Type: "env", Options: map[string]string{}})
 	if err != nil {
-		t.Fatalf("expected no error, got %v", err)
+		t.Fatalf("unexpected error: %v", err)
 	}
-	if p == nil {
-		t.Fatal("expected provider, got nil")
-	}
-	if p.Name() != "env" {
-		t.Errorf("expected name 'env', got %q", p.Name())
+	if b == nil {
+		t.Fatal("expected non-nil backend")
 	}
 }
 
 func TestNew_FileBackend_MissingPath(t *testing.T) {
-	_, err := backend.New(backend.TypeFile, map[string]string{})
+	_, err := New(BackendConfig{Type: "file", Options: map[string]string{}})
 	if err == nil {
-		t.Fatal("expected error for missing path, got nil")
+		t.Fatal("expected error for missing path")
 	}
 }
 
 func TestNew_FileBackend_WithPath(t *testing.T) {
-	p, err := backend.New(backend.TypeFile, map[string]string{"path": "/tmp/secrets.env"})
+	b, err := New(BackendConfig{Type: "file", Options: map[string]string{"path": "/tmp/test.env"}})
 	if err != nil {
-		t.Fatalf("expected no error, got %v", err)
+		t.Fatalf("unexpected error: %v", err)
 	}
-	if p.Name() != "file" {
-		t.Errorf("expected name 'file', got %q", p.Name())
+	if b == nil {
+		t.Fatal("expected non-nil backend")
+	}
+}
+
+func TestNew_VaultBackend(t *testing.T) {
+	b, err := New(BackendConfig{
+		Type: "vault",
+		Options: map[string]string{
+			"address": "http://vault:8200",
+			"token":   "mytoken",
+			"path":    "myapp/config",
+		},
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if b == nil {
+		t.Fatal("expected non-nil backend")
 	}
 }
 
 func TestNew_UnsupportedBackend(t *testing.T) {
-	_, err := backend.New("unknown", nil)
+	_, err := New(BackendConfig{Type: "unknown"})
 	if err == nil {
-		t.Fatal("expected error for unsupported backend, got nil")
-	}
-	var unsupported *backend.ErrUnsupportedBackend
-	if !errors.As(err, &unsupported) {
-		t.Errorf("expected ErrUnsupportedBackend, got %T", err)
+		t.Fatal("expected error for unsupported backend")
 	}
 }
 
 func TestErrSecretNotFound_Message(t *testing.T) {
-	err := &backend.ErrSecretNotFound{Backend: "env", Key: "MY_SECRET"}
-	expected := `secret "MY_SECRET" not found in backend "env"`
-	if err.Error() != expected {
-		t.Errorf("expected %q, got %q", expected, err.Error())
-	}
-}
-
-func TestErrUnsupportedBackend_Message(t *testing.T) {
-	err := &backend.ErrUnsupportedBackend{Type: "consul"}
-	expected := `unsupported backend type: "consul"`
+	err := ErrSecretNotFound{Path: "MY_KEY"}
+	expected := "secret not found: MY_KEY"
 	if err.Error() != expected {
 		t.Errorf("expected %q, got %q", expected, err.Error())
 	}
