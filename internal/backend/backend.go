@@ -1,33 +1,34 @@
 package backend
 
 import (
+	"context"
 	"fmt"
-
-	"github.com/envchain-cli/envchain-cli/internal/config"
 )
 
-// Backend is the interface all secret backends must satisfy.
+// Backend is the interface that all secret backends must implement.
 type Backend interface {
-	Get(key string) (string, error)
+	Get(ctx context.Context, key string) (string, error)
 	String() string
 }
 
-// New constructs a Backend from a config.Backend definition.
-func New(cfg config.Backend) (Backend, error) {
-	switch cfg.Type {
+// New creates a Backend from the given type and options map.
+func New(backendType string, opts map[string]string) (Backend, error) {
+	switch backendType {
 	case "env":
-		return NewEnvBackend(cfg.Options)
+		return NewEnvBackend(opts), nil
 	case "file":
-		return NewFileBackend(cfg.Options)
+		return NewFileBackend(opts)
 	case "vault":
-		return NewVaultBackend(cfg.Options)
+		return NewVaultBackend(opts)
 	case "ssm":
-		return NewSSMBackend(cfg.Options)
+		return NewSSMBackend(opts)
 	case "secretsmanager":
-		return NewSecretsManagerBackend(cfg.Options)
+		return NewSecretsManagerBackend(opts)
 	case "gcp":
-		return NewGCPBackend(cfg.Options)
+		return NewGCPBackend(opts)
+	case "azure":
+		return NewAzureBackend(opts)
 	default:
-		return nil, fmt.Errorf("unsupported backend type: %q", cfg.Type)
+		return nil, fmt.Errorf("unsupported backend type: %q", backendType)
 	}
 }
