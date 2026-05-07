@@ -1,0 +1,65 @@
+package backend
+
+import (
+	"context"
+	"fmt"
+	"strings"
+
+	secretmanager "cloud.google.com/go/secretmanager/apiv1"
+	"cloud.google.com/go/secretmanager/apiv1/secretmanagerpb"
+	"google.golang.org/api/option"
+)
+
+// GCPBackend retrieves secrets from Google Cloud Secret Manager.
+type GCPBackend struct {
+	client  gcpSecretClient
+	project string
+}
+
+type gcpSecretClient interface {
+	AccessSecretVersion(ctx context.Context, req *secretmanagerpb.AccessSecretVersionRequest, opts ...option.ClientOption) (*secretmanagerpb.AccessSecretVersionResponse, error)
+	Close() error
+}
+
+type realGCPClient struct {
+	inner *secretmanager.Client
+}
+
+func (r *realGCPClient) AccessSecretVersion(ctx context.Context, req *secretmanagerpb.AccessSecretVersionRequest, opts ...option.ClientOption) (*secretmanagerpb.AccessSecretVersionResponse, error) {
+	return r.inner.AccessSecretVersion(ctx, req)
+}
+
+func (r *realGCPClient) Close() error {
+	return r.inner.Close()
+}
+
+// NewGCPBackend creates a GCPBackend from config options.
+// Required options: "project"
+func NewGCPBackend(opts map[string]string) (*GCPBackend, error) {
+	project, ok := opts["project"]
+	if !ok || project == "" {
+		return nil, fmt.Errorf("gcp backend: missing required option 'project'")
+	}
+	ctx := context.Background()
+	c, err := secretmanager.NewClient(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("gcp backend: failed to create client: %w", err)
+	}
+	return &GCPBackend{client: &realGCPClient{inner: c}, project: project}, nil
+}
+
+// Get retrieves the latest version of a secret by name.
+func (g *GCPBackend) Get(key string) (string, error) {
+	name := fmt.Sprintf("projects/%s/secrets/%s/versions/latest", g.project, key)
+	resp, err := g.client.AccessSecretVersion(context.Background(), &secretmanagerpb.AccessSecretVersionRequest{
+		Name: name,
+	})
+	if err != nil {
+		return "", fmt.Errorf("gcp backend: failed to access secret %q: %w", key, err)
+	}
+	return strings.TrimRight(string(resp.Payload.Data), "\n"), nil
+}
+
+func (g *GCPBackend) String() string {
+	return fmt.Sprintf("gcp(project=%s)", g.project)
+}
