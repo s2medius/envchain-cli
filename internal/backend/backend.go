@@ -11,7 +11,7 @@ type Backend interface {
 	String() string
 }
 
-// New creates a Backend from the given type and options map.
+// New constructs a Backend from a type name and options map.
 func New(backendType string, opts map[string]string) (Backend, error) {
 	switch backendType {
 	case "env":
@@ -28,6 +28,8 @@ func New(backendType string, opts map[string]string) (Backend, error) {
 		return NewGCPBackend(opts)
 	case "azure":
 		return NewAzureBackend(opts)
+	case "1password":
+		return NewOnePasswordBackend(opts)
 	default:
 		return nil, fmt.Errorf("unsupported backend type: %q", backendType)
 	}
