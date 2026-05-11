@@ -1,59 +1,43 @@
 package backend
 
 import (
+	"context"
 	"fmt"
 
-	"github.com/yourusername/envchain-cli/internal/config"
+	"github.com/user/envchain-cli/internal/config"
 )
 
-// Backend is the interface that all secret backends must implement.
+// Backend is the interface all secret backends must implement.
 type Backend interface {
-	Get(key string) (string, error)
+	Get(ctx context.Context, key string) (string, error)
 	String() string
 }
 
-// New creates a Backend from a config.Backend definition.
+// New constructs a Backend from a config.Backend definition.
 func New(cfg config.Backend) (Backend, error) {
-	opts := cfg.Options
-	if opts == nil {
-		opts = map[string]string{}
-	}
-
 	switch cfg.Type {
 	case "env":
-		return NewEnvBackend(opts), nil
-
+		return NewEnvBackend(cfg.Options)
 	case "file":
-		path, ok := opts["path"]
-		if !ok || path == "" {
-			return nil, fmt.Errorf("file backend: missing required option 'path'")
-		}
-		return NewFileBackend(path)
-
+		return NewFileBackend(cfg.Options)
 	case "vault":
-		return NewVaultBackend(opts)
-
+		return NewVaultBackend(cfg.Options)
 	case "ssm":
-		return NewSSMBackend(opts)
-
+		return NewSSMBackend(cfg.Options)
 	case "secretsmanager":
-		return NewSecretsManagerBackend(opts)
-
+		return NewSecretsManagerBackend(cfg.Options)
 	case "gcp":
-		return NewGCPBackend(opts)
-
+		return NewGCPBackend(cfg.Options)
 	case "azure":
-		return NewAzureBackend(opts)
-
+		return NewAzureBackend(cfg.Options)
 	case "1password":
-		return NewOnePasswordBackend(opts)
-
+		return NewOnePasswordBackend(cfg.Options)
 	case "doppler":
-		return NewDopplerBackend(opts)
-
+		return NewDopplerBackend(cfg.Options)
 	case "infisical":
-		return NewInfisicalBackend(opts)
-
+		return NewInfisicalBackend(cfg.Options)
+	case "github":
+		return NewGitHubBackend(cfg.Options)
 	default:
 		return nil, fmt.Errorf("unsupported backend type: %q", cfg.Type)
 	}
