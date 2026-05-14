@@ -34,6 +34,8 @@ Your PAT must have the following scopes:
 - `repo` — for private repositories
 - `public_repo` — for public repositories
 
+> **Tip:** You can also use a **fine-grained personal access token** with the `Secrets` permission (read-only) scoped to the specific repository, which is more secure than a classic PAT with broad `repo` scope.
+
 ## Example Usage
 
 ```yaml
