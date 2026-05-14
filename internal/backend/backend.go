@@ -2,17 +2,17 @@ package backend
 
 import "fmt"
 
-// Backend is the common interface all secret backends must implement.
+// Backend is the interface implemented by all secret backends.
 type Backend interface {
 	Get(key string) (string, error)
 	String() string
 }
 
-// New constructs a Backend from the given type string and options map.
+// New creates a Backend from a type name and options map.
 func New(backendType string, opts map[string]string) (Backend, error) {
 	switch backendType {
 	case "env":
-		return NewEnvBackend(opts), nil
+		return NewEnvBackend(opts)
 	case "file":
 		return NewFileBackend(opts)
 	case "vault":
@@ -41,7 +41,11 @@ func New(backendType string, opts map[string]string) (Backend, error) {
 		return NewLastPassBackend(opts)
 	case "hashicorp":
 		return NewHashiCorpBackend(opts)
+	case "akeyless":
+		return NewAkeylessBackend(opts)
+	case "conjur":
+		return NewConjurBackend(opts)
 	default:
-		return nil, fmt.Errorf("unsupported backend type: %q", backendType)
+		return nil, fmt.Errorf("backend: unsupported type %q", backendType)
 	}
 }
