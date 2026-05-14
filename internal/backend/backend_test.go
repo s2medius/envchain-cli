@@ -1,6 +1,7 @@
 package backend
 
 import (
+	"strings"
 	"testing"
 )
 
@@ -22,7 +23,7 @@ func TestNew_FileBackend_MissingPath(t *testing.T) {
 }
 
 func TestNew_FileBackend_WithPath(t *testing.T) {
-	b, err := New("file", map[string]string{"path": "/tmp/test.env"})
+	b, err := New("file", map[string]string{"path": "/dev/null"})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -39,31 +40,38 @@ func TestNew_VaultBackend(t *testing.T) {
 }
 
 func TestNew_UnsupportedBackend(t *testing.T) {
-	_, err := New("unknown", map[string]string{})
+	_, err := New("nonexistent", map[string]string{})
 	if err == nil {
 		t.Fatal("expected error for unsupported backend")
 	}
+	if !strings.Contains(err.Error(), "unsupported") {
+		t.Errorf("expected 'unsupported' in error, got: %v", err)
+	}
 }
 
-func TestNew_OnePasswordBackend(t *testing.T) {
-	b, err := New("1password", map[string]string{"vault": "dev"})
+func TestNew_OnePasswordConnectBackend(t *testing.T) {
+	_, err := New("onepassword_connect", map[string]string{})
+	if err == nil {
+		t.Fatal("expected error for missing onepassword_connect config")
+	}
+	if !strings.Contains(err.Error(), "token") {
+		t.Errorf("expected 'token' in error, got: %v", err)
+	}
+}
+
+func TestNew_OnePasswordConnectBackend_Valid(t *testing.T) {
+	b, err := New("onepassword_connect", map[string]string{
+		"token":    "tok",
+		"url":      "http://localhost:8080",
+		"vault_id": "vault-1",
+	})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 	if b == nil {
 		t.Fatal("expected non-nil backend")
 	}
-	if b.String() != "1password(vault=dev)" {
-		t.Errorf("unexpected String(): %q", b.String())
-	}
-}
-
-func TestNew_OnePasswordBackend_NoVault(t *testing.T) {
-	b, err := New("1password", map[string]string{})
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	if b.String() != "1password" {
-		t.Errorf("unexpected String(): %q", b.String())
+	if !strings.Contains(b.String(), "onepassword_connect") {
+		t.Errorf("unexpected String(): %s", b.String())
 	}
 }

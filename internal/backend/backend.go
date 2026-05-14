@@ -1,6 +1,8 @@
 package backend
 
-import "fmt"
+import (
+	"fmt"
+)
 
 // Backend is the interface implemented by all secret backends.
 type Backend interface {
@@ -8,44 +10,46 @@ type Backend interface {
 	String() string
 }
 
-// New creates a Backend from a type name and options map.
-func New(backendType string, opts map[string]string) (Backend, error) {
+// New constructs a Backend from a type name and configuration map.
+func New(backendType string, cfg map[string]string) (Backend, error) {
 	switch backendType {
 	case "env":
-		return NewEnvBackend(opts)
+		return NewEnvBackend(cfg)
 	case "file":
-		return NewFileBackend(opts)
+		return NewFileBackend(cfg)
 	case "vault":
-		return NewVaultBackend(opts)
+		return NewVaultBackend(cfg)
 	case "ssm":
-		return NewSSMBackend(opts)
+		return NewSSMBackend(cfg)
 	case "secretsmanager":
-		return NewSecretsManagerBackend(opts)
+		return NewSecretsManagerBackend(cfg)
 	case "gcp":
-		return NewGCPBackend(opts)
+		return NewGCPBackend(cfg)
 	case "azure":
-		return NewAzureBackend(opts)
+		return NewAzureBackend(cfg)
 	case "1password":
-		return NewOnePasswordBackend(opts)
+		return NewOnePasswordBackend(cfg)
+	case "onepassword_connect":
+		return NewOnePasswordConnectBackend(cfg)
 	case "doppler":
-		return NewDopplerBackend(opts)
+		return NewDopplerBackend(cfg)
 	case "infisical":
-		return NewInfisicalBackend(opts)
+		return NewInfisicalBackend(cfg)
 	case "github":
-		return NewGitHubBackend(opts)
+		return NewGitHubBackend(cfg)
 	case "keychain":
-		return NewKeychainBackend(opts)
+		return NewKeychainBackend(cfg)
 	case "bitwarden":
-		return NewBitwardenBackend(opts)
+		return NewBitwardenBackend(cfg)
 	case "lastpass":
-		return NewLastPassBackend(opts)
+		return NewLastPassBackend(cfg)
 	case "hashicorp":
-		return NewHashiCorpBackend(opts)
+		return NewHashiCorpBackend(cfg)
 	case "akeyless":
-		return NewAkeylessBackend(opts)
+		return NewAkeylessBackend(cfg)
 	case "conjur":
-		return NewConjurBackend(opts)
+		return NewConjurBackend(cfg)
 	default:
-		return nil, fmt.Errorf("backend: unsupported type %q", backendType)
+		return nil, fmt.Errorf("unsupported backend type: %q", backendType)
 	}
 }
