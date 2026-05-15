@@ -63,6 +63,25 @@ func TestKeychainBackend_Get_NotFound(t *testing.T) {
 	}
 }
 
+func TestKeychainBackend_Get_MultipleKeys(t *testing.T) {
+	secrets := map[string]string{
+		"API_KEY":     "abc123",
+		"DB_PASSWORD": "s3cr3t",
+		"TOKEN":       "tok-xyz",
+	}
+	b := newTestKeychainBackend("my-app", secrets)
+	for key, expected := range secrets {
+		val, err := b.Get(key)
+		if err != nil {
+			t.Errorf("unexpected error for key %q: %v", key, err)
+			continue
+		}
+		if val != expected {
+			t.Errorf("key %q: expected %q, got %q", key, expected, val)
+		}
+	}
+}
+
 func TestKeychainBackend_String(t *testing.T) {
 	b := newTestKeychainBackend("my-app", nil)
 	expected := "keychain(service=my-app)"
