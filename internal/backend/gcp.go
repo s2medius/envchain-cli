@@ -50,12 +50,21 @@ func NewGCPBackend(opts map[string]string) (*GCPBackend, error) {
 
 // Get retrieves the latest version of a secret by name.
 func (g *GCPBackend) Get(key string) (string, error) {
-	name := fmt.Sprintf("projects/%s/secrets/%s/versions/latest", g.project, key)
+	return g.GetVersion(key, "latest")
+}
+
+// GetVersion retrieves a specific version of a secret by name.
+// Use "latest" to retrieve the most recent enabled version.
+func (g *GCPBackend) GetVersion(key, version string) (string, error) {
+	if version == "" {
+		version = "latest"
+	}
+	name := fmt.Sprintf("projects/%s/secrets/%s/versions/%s", g.project, key, version)
 	resp, err := g.client.AccessSecretVersion(context.Background(), &secretmanagerpb.AccessSecretVersionRequest{
 		Name: name,
 	})
 	if err != nil {
-		return "", fmt.Errorf("gcp backend: failed to access secret %q: %w", key, err)
+		return "", fmt.Errorf("gcp backend: failed to access secret %q (version %s): %w", key, version, err)
 	}
 	return strings.TrimRight(string(resp.Payload.Data), "\n"), nil
 }
