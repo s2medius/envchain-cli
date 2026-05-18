@@ -1,55 +1,67 @@
 package backend
 
-import (
-	"fmt"
-)
+import "fmt"
 
-// Backend is the interface implemented by all secret backends.
+// Backend is the interface all secret backends must implement.
 type Backend interface {
 	Get(key string) (string, error)
 	String() string
 }
 
-// New constructs a Backend from a type name and configuration map.
-func New(backendType string, cfg map[string]string) (Backend, error) {
+// New constructs a Backend from the given type name and options map.
+func New(backendType string, opts map[string]string) (Backend, error) {
 	switch backendType {
 	case "env":
-		return NewEnvBackend(cfg)
+		return NewEnvBackend(opts)
 	case "file":
-		return NewFileBackend(cfg)
+		return NewFileBackend(opts)
 	case "vault":
-		return NewVaultBackend(cfg)
+		return NewVaultBackend(opts)
 	case "ssm":
-		return NewSSMBackend(cfg)
+		return NewSSMBackend(opts)
 	case "secretsmanager":
-		return NewSecretsManagerBackend(cfg)
+		return NewSecretsManagerBackend(opts)
 	case "gcp":
-		return NewGCPBackend(cfg)
+		return NewGCPBackend(opts)
 	case "azure":
-		return NewAzureBackend(cfg)
+		return NewAzureBackend(opts)
 	case "1password":
-		return NewOnePasswordBackend(cfg)
-	case "onepassword_connect":
-		return NewOnePasswordConnectBackend(cfg)
+		return NewOnePasswordBackend(opts)
 	case "doppler":
-		return NewDopplerBackend(cfg)
+		return NewDopplerBackend(opts)
 	case "infisical":
-		return NewInfisicalBackend(cfg)
+		return NewInfisicalBackend(opts)
 	case "github":
-		return NewGitHubBackend(cfg)
+		return NewGitHubBackend(opts)
 	case "keychain":
-		return NewKeychainBackend(cfg)
+		return NewKeychainBackend(opts)
 	case "bitwarden":
-		return NewBitwardenBackend(cfg)
+		return NewBitwardenBackend(opts)
 	case "lastpass":
-		return NewLastPassBackend(cfg)
+		return NewLastPassBackend(opts)
 	case "hashicorp":
-		return NewHashiCorpBackend(cfg)
+		return NewHashiCorpBackend(opts)
 	case "akeyless":
-		return NewAkeylessBackend(cfg)
+		return NewAkeylessBackend(opts)
 	case "conjur":
-		return NewConjurBackend(cfg)
+		return NewConjurBackend(opts)
+	case "1password-connect":
+		return NewOnePasswordConnectBackend(opts)
+	case "pulumi":
+		return NewPulumiBackend(opts)
+	case "nomad":
+		return NewNomadBackend(opts)
+	case "keeper":
+		return NewKeeperBackend(opts)
+	case "vercel":
+		return NewVercelBackend(opts)
+	case "netlify":
+		return NewNetlifyBackend(opts)
+	case "railway":
+		return NewRailwayBackend(opts)
+	case "flyio":
+		return NewFlyIOBackend(opts)
 	default:
-		return nil, fmt.Errorf("unsupported backend type: %q", backendType)
+		return nil, fmt.Errorf("backend: unsupported type %q", backendType)
 	}
 }
